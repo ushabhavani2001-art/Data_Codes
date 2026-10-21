@@ -21,3 +21,7 @@ finaldf = (a
            .join(b, (a["salary"] == b["salary"]) & (a["workerid"] != b["workerid"]), "inner")
            .select("a.*"))
 finaldf.show()
+
+
+
+print(finaldf)
