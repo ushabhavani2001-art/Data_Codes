@@ -112,24 +112,7 @@ final_df = (
 print("=== All Customers (Single Chained Pipeline) ===")
 final_df.show()
 
-# --- Filter for only C101 data (without col) ---
-c101_df = final_df.filter("customer_id = 'C101'")
 
-print("=== Only C101 Data ===")
-c101_df.show()
-
-spark.stop()
-
-c101_only_df = (
-    transactions_df
-    .dropDuplicates(["transaction_id"])
-    .filter((F.col("customer_id") == "C101") & (F.col("status") == "SUCCESS") & (F.col("amount") > 0))
-    .join(customers_df, on="customer_id", how="inner")
-    .groupBy("customer_id", "customer_name")
-    .agg(F.sum("amount").alias("total_spending"))
-)
-
-c101_only_df.show()
 
 
 
