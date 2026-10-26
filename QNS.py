@@ -1,27 +1,48 @@
+
 from pyspark.sql import SparkSession
-
-spark = SparkSession.builder.appName("Example").getOrCreate()
-
-data = [
-    ("001", "Monika", "Arora", 100000, "2014-02-20 09:00:00", "HR"),
-    ("002", "Niharika", "Verma", 300000, "2014-06-11 09:00:00", "Admin"),
-    ("003", "Vishal", "Singhal", 300000, "2014-02-20 09:00:00", "HR"),
-    ("004", "Amitabh", "Singh", 500000, "2014-02-20 09:00:00", "Admin"),
-    ("005", "Vivek", "Bhati", 500000, "2014-06-11 09:00:00", "Admin")
+from pyspark.sql.window import Window
+from pyspark.sql.functions import *
+spark = SparkSession.builder.getOrCreate()
+transactions = [
+    ("T101", "C101", 1000, "SUCCESS"),
+    ("T102", "C102", 2000, "SUCCESS"),
+    ("T103", "C101", 500, "FAILED"),
+    ("T104", "C103", 1500, "SUCCESS"),
+    ("T105", "C101", 700, "SUCCESS"),
+    ("T106", "C102", 2000, "SUCCESS"),
+    ("T107", "C104", -100, "SUCCESS")
 ]
-df = (spark.createDataFrame(data)
-      .toDF("workerid", "firstname", "lastname", "salary", "joiningdate", "depart"))
 
-df.show()
+transaction_cols = [
+    "transaction_id", "customer_id", "amount", "status"
+]
 
-a = df.alias("a")
-b = df.alias("b")
-
-finaldf = (a
-           .join(b, (a["salary"] == b["salary"]) & (a["workerid"] != b["workerid"]), "inner")
-           .select("a.*"))
-finaldf.show()
+transactions_df = spark.createDataFrame(
+    transactions, transaction_cols
+)
+transactions_df.show()
 
 
+customers = [
+    ("C101", "Ravi"),
+    ("C102", "Priya"),
+    ("C103", "Kiran")
+]
 
-print(finaldf)
+customers_df = spark.createDataFrame(
+    customers, ["customer_id", "customer_name"]
+)
+customers_df.show()
+
+
+success= transactions_df.filter("status = 'SUCCESS'").dropDuplicates(["transaction_id"])
+success.show()
+
+customer = (success
+           .join(customers_df, "customer_id", "inner")
+           .groupBy("customer_id", "customer_name")
+           .agg(sum("amount").alias("total_amount"))
+           )
+win = Window.orderBy(desc("total_amount"))
+ranked = customer.withColumn("rank", rank().over(win))
+ranked.show()
