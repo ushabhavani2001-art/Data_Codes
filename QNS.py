@@ -112,7 +112,48 @@ ranked.show()
 
 
 #Task2
-data =""" [
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+from pyspark.sql.window import Window
+from pyspark.sql.types import *
+
+school_schema = StructType([
+    StructField("school_id", IntegerType(), True),
+    StructField("school_name", StringType(), True),
+    StructField("established_year", IntegerType(), True),
+    StructField("location", MapType(StringType(), StringType()), True),
+    StructField("principal", StructType([
+        StructField("principal_id", IntegerType(), True),
+        StructField("principal_name", StringType(), True),
+        StructField("email", StringType(), True)
+    ]), True),
+    StructField("teachers", ArrayType(StructType([
+        StructField("teacher_id", IntegerType(), True),
+        StructField("teacher_name", StringType(), True),
+        StructField("experience", IntegerType(), True),
+        StructField("salary", FloatType(), True),
+        StructField("subjects", ArrayType(StringType()), True)
+    ])), True),
+    StructField("students", ArrayType(StructType([
+        StructField("student_id", IntegerType(), True),
+        StructField("student_name", StringType(), True),
+        StructField("age", IntegerType(), True),
+        StructField("class_name", StringType(), True),
+        StructField("subjects", ArrayType(StringType()), True),
+        StructField("attendance", ArrayType(StructType([
+            StructField("month", StringType(), True),
+            StructField("total_days", IntegerType(), True),
+            StructField("present_days", IntegerType(), True)
+        ])), True),
+        StructField("exam_results", ArrayType(StructType([
+            StructField("subject", StringType(), True),
+            StructField("marks", IntegerType(), True),
+            StructField("grade", StringType(), True)
+        ])), True)
+    ])), True)
+])
+
+data = [
     (
         101,
         "Green Valley School",
@@ -359,10 +400,11 @@ data =""" [
         ]
     )
 ]
-"""
-df = spark.read.json(sc.parallelize([data]))
-df.show()
+df = spark.createDataFrame(data, school_schema)
 df.printSchema()
+
+
+
 
 
 
