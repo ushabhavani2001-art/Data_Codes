@@ -457,3 +457,78 @@ expo=(tol_flatten
 print("=== Exploded DataFrame ===")
 expo.show(truncate=False)
 expo.printSchema()
+
+
+#Task 3
+
+customers = [
+    (1, "Aarav"), (2, "Vivaan"), (3, "Aditya"), (4, "Vihaan"), (5, "Arjun"),
+    (6, "Sai"), (7, "Krishna"), (8, "Ishaan"), (9, "Rohan"), (10, "Karthik"),
+    (11, "Rahul"), (12, "Sanjay"), (13, "Varun"), (14, "Manoj"), (15, "Nikhil"),
+    (16, "Priya"), (17, "Ananya"), (18, "Sneha"), (19, "Pooja"), (20, "Kavya"),
+    (21, "Divya"), (22, "Meera"), (23, "Aisha"), (24, "Ritika"), (25, "Neha"),
+    (26, "Akash"), (27, "Vijay"), (28, "Surya"), (29, "Ajay"), (30, "Deepak"),
+    (31, "Harish"), (32, "Ganesh"), (33, "Rakesh"), (34, "Aravind"), (35, "Praveen"),
+    (36, "Bhavana"), (37, "Lakshmi"), (38, "Keerthi"), (39, "Reshma"), (40, "Swathi"),
+    (41, "Anil"), (42, "Mohan"), (43, "Suresh"), (44, "Chandra"), (45, "Teja"),
+    (46, "Jyothi"), (47, "Shilpa"), (48, "Ramya"), (49, "Nandhini"), (50, "Siri")
+]
+
+customer_columns = ["id", "name"]
+
+df1 = spark.createDataFrame(customers, customer_columns)
+df1.show()
+orders = [
+    (1001,1,1200),(1002,2,2500),(1003,3,1800),(1004,4,3200),(1005,5,4500),
+    (1006,6,900),(1007,7,1300),(1008,8,2100),(1009,9,1700),(1010,10,5000),
+    (1011,11,2400),(1012,12,3100),(1013,13,1500),(1014,14,2800),(1015,15,3900),
+    (1016,16,4200),(1017,17,600),(1018,18,7000),(1019,19,1600),(1020,20,2300),
+    (1021,21,3400),(1022,22,1200),(1023,23,4300),(1024,24,1750),(1025,25,2600),
+    (1026,26,2200),(1027,27,3600),(1028,28,1250),(1029,29,4900),(1030,30,1800),
+    (1031,31,2900),(1032,32,5400),(1033,33,1100),(1034,34,6700),(1035,35,1450),
+    (1036,36,3100),(1037,37,2800),(1038,38,3500),(1039,39,4100),(1040,40,1300),
+    (1041,41,2100),(1042,42,4800),(1043,43,2500),(1044,44,3900),(1045,45,1700)
+]
+
+order_columns = ["order_id", "id", "amount"]
+
+ff1 = spark.createDataFrame(orders, order_columns)
+ff1.show()
+payments = [
+    (1001,"Completed"),(1002,"Pending"),(1003,"Completed"),(1004,"Failed"),(1005,"Completed"),
+    (1006,"Pending"),(1007,"Completed"),(1008,"Completed"),(1009,"Failed"),(1010,"Completed"),
+    (1011,"Pending"),(1012,"Completed"),(1013,"Failed"),(1014,"Completed"),(1015,"Pending"),
+    (1016,"Completed"),(1017,"Failed"),(1018,"Completed"),(1019,"Pending"),(1020,"Completed"),
+    (1021,"Completed"),(1022,"Failed"),(1023,"Pending"),(1024,"Completed"),(1025,"Completed"),
+    (1026,"Pending"),(1027,"Completed"),(1028,"Failed"),(1029,"Completed"),(1030,"Pending"),
+    (1031,"Completed"),(1032,"Completed"),(1033,"Failed"),(1034,"Pending"),(1035,"Completed"),
+    (1036,"Completed"),(1037,"Pending"),(1038,"Completed"),(1039,"Failed"),(1040,"Completed"),
+    (1041,"Pending"),(1042,"Completed"),(1043,"Completed"),(1044,"Failed"),(1045,"Completed")
+]
+
+payment_columns = ["order_id", "status"]
+dd1 = spark.createDataFrame(payments, payment_columns)
+dd1.show()
+
+tol=(df1
+     .join(ff1,"id")
+     .groupBy("id","name").agg(sum("amount").alias("total_amount"))
+     .orderBy(desc("total_amount")))
+
+tol.show()
+
+top=tol.limit(5)
+top.show()
+
+pen=df1.join(ff1,"id" , "left_anti")
+pen.show()
+
+
+customer_payments = df1.join(ff1, "id").join(dd1, "order_id")
+customer_payments.show()
+
+only_failed = customer_payments.groupBy("id", "name").agg(
+    collect_set("status").alias("statuses")
+).filter((size("statuses") == 1) & (element_at("statuses", 1) == "Failed"))
+
+only_failed.show()
